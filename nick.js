@@ -1,16 +1,5 @@
 (function(window) {
 
-	//	alert(/^.*\ba\b.*$/g.test(' 1 a s '))
-	//return;
-	/*
-	 * Tween.js
-	 * t: current time（当前时间）；
-	 * b: beginning value（初始值）；
-	 * c: change in value（变化量）；
-	 * d: duration（持续时间）。
-	 * you can visit 'http://easings.net/zh-cn' to get effect
-	 */
-
 	var window = window,
 
 		document = window.document,
