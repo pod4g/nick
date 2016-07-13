@@ -1,1193 +1,1196 @@
-(function(window) {
+;(function(window) {
 
-		var window = window,
+		// 希望改成严格模式。我试着改了一下，很多地方报错
+        // 'use strict';
+        
+        var window = window,
 
-		document = window.document,
+        document = window.document,
 
-		navigator = window.navigator,
+        navigator = window.navigator,
 
-		object = {},
+        object = {},
 
-		string = '',
+        string = '',
 
-		toString = {}.toString,
-		
-		undefined,
+        toString = {}.toString,
+        
+        undefined,
 
-		// type = [],
-		
-		class2type = 'Object Number Boolean String Function',
+        // type = [],
+        
+        class2type = 'Object Number Boolean String Function',
 
-		rword = /[^, ]+/g;
+        rword = /[^, ]+/g;
 
-		space = '[\\s\\r\\n]+',
+        space = '[\\s\\r\\n]+',
 
-		lowerCase = string.toLowerCase,
+        lowerCase = string.toLowerCase,
 
-		upperCase = string.toUpperCase,
+        upperCase = string.toUpperCase,
 
-		real = !0,
+        real = !0,
 
-		fake = !1,
+        fake = !1,
 
-		tween = {
-			linear: function(t, b, c, d) {
-				return c * t / d + b;
-			},
-			bounce: {
-				easeIn: function(t, b, c, d) {
-					return c - tween.bounce.easeOut(d - t, 0, c, d) + b;
-				},
-				easeOut: function(t, b, c, d) {
-					if ((t /= d) < (1 / 2.75)) {
-						return c * (7.5625 * t * t) + b;
-					} else if (t < (2 / 2.75)) {
-						return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
-					} else if (t < (2.5 / 2.75)) {
-						return c * (7.5625 * (t -= (2.25 / 2.75)) * t + .9375) + b;
-					} else {
-						return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
-					}
-				},
-				easeInOut: function(t, b, c, d) {
-					if (t < d / 2) {
-						return tween.bounce.easeIn(t * 2, 0, c, d) * .5 + b;
-					} else {
-						return tween.bounce.easeOut(t * 2 - d, 0, c, d) * .5 + c * .5 + b;
-					}
-				}
-			}
-		},
+        tween = {
+            linear: function(t, b, c, d) {
+                return c * t / d + b;
+            },
+            bounce: {
+                easeIn: function(t, b, c, d) {
+                    return c - tween.bounce.easeOut(d - t, 0, c, d) + b;
+                },
+                easeOut: function(t, b, c, d) {
+                    if ((t /= d) < (1 / 2.75)) {
+                        return c * (7.5625 * t * t) + b;
+                    } else if (t < (2 / 2.75)) {
+                        return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
+                    } else if (t < (2.5 / 2.75)) {
+                        return c * (7.5625 * (t -= (2.25 / 2.75)) * t + .9375) + b;
+                    } else {
+                        return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
+                    }
+                },
+                easeInOut: function(t, b, c, d) {
+                    if (t < d / 2) {
+                        return tween.bounce.easeIn(t * 2, 0, c, d) * .5 + b;
+                    } else {
+                        return tween.bounce.easeOut(t * 2 - d, 0, c, d) * .5 + c * .5 + b;
+                    }
+                }
+            }
+        },
 
-		// 更精确地判断type。以对象的[[class]]属性作为判断的依据。
-		type = function(data){
+        // 更精确地判断type。以对象的[[class]]属性作为判断的依据。
+        type = function(data){
 
-			var t = typeof data,s;
-			
-			if( data == null ) return data + '';
+            var t = typeof data,s;
+            
+            if( data == null ) return data + '';
 
-			return t === 'object' ? toString.call( obj ).slice( 8, -1 ).toLowerCase() : t;
+            return t === 'object' ? toString.call( data ).slice( 8, -1 ).toLowerCase() : t;
 
-		},
+        },
 
-		// type = function(data) {
-		// 	return null === data ? data + '' : 'object' == typeof data || 'function' == typeof data ? type[toString.call(data)] || 'object' : typeof data
-		// },
+        // type = function(data) {
+        //  return null === data ? data + '' : 'object' == typeof data || 'function' == typeof data ? type[toString.call(data)] || 'object' : typeof data
+        // },
 
-		isWindow = function(window) {
+        isWindow = function(window) {
 
-			return null != window && window == window.window
+            return null != window && window == window.window
 
-		},
+        },
+        // 下方这些is工具方法，最好放在一起，统一生成，类似于 Line736的 bindIs
+        isObject = function(object) {
+            return type(object) == 'object'
+        },
 
-		isObject = function(object) {
-			return type(object) == 'object'
-		},
+        isFloat = function(number) {
 
-		isFloat = function(number) {
+            return isNumber(number) && /\./.test(number);
 
-			return isNumber(number) && /\./.test(number);
+        },
+        isNick = function(object) {
 
-		},
-		isNick = function(object) {
+            return object && object instanceof nick
 
-			return object && object instanceof nick
+        },
 
-		},
+        isElement = function(object) {
 
-		isElement = function(object) {
+            return object && (object.nodeType == 1 || object.nodeType === 9)
 
-			return object && (object.nodeType == 1 || object.nodeType === 9)
+        },
 
-		},
+        isArray = function(array) {
 
-		isArray = function(array) {
+            return Array.isArray ? Array.isArray : type( array ) == 'array'
+        },
 
-			return Array.isArray ? Array.isArray : type( array ) == 'array'
-		},
+        isNick = function(object) {
 
-		isNick = function(object) {
+            return object && object instanceof nick
 
-			return object && object instanceof nick
+        },
+        isString = function(string) {
 
-		},
-		isString = function(string) {
+            return type(string) == 'string'
 
-			return type(string) == 'string'
+        },
+        isFunction = function(fun) {
 
-		},
-		isFunction = function(fun) {
+            return type(fun) == 'function'
 
-			return type(fun) == 'function'
+        },
 
-		},
+        number = function(number, float) {
 
-		number = function(number, float) {
+            number = (float ? parseFloat : parseInt)(number);
 
-			number = (float ? parseFloat : parseInt)(number);
+            return isNaN(number) ? 0 : number
 
-			return isNaN(number) ? 0 : number
+        },
+        int = function(num) {
 
-		},
-		int = function(num) {
+            return number(num)
 
-			return number(num)
+        },
+        float = function(num) {
 
-		},
-		float = function(num) {
+            return number(num, real)
 
-			return number(num, real)
+        },
 
-		},
+        trim = function(string, charlist) {
 
-		trim = function(string, charlist) {
+            return rtrim(ltrim(string, charlist), charlist)
+        },
 
-			return rtrim(ltrim(string, charlist), charlist)
-		},
+        ltrim = function(string, charlist, direction) {
 
-		ltrim = function(string, charlist, direction) {
+            charlist = charlist ? charlist + '+' : '';
 
-			charlist = charlist ? charlist + '+' : '';
+            return (string + '').replace(new RegExp((direction ? '' : '^') + (charlist || space) + (direction ? '$' : '')), '');
 
-			return (string + '').replace(new RegExp((direction ? '' : '^') + (charlist || space) + (direction ? '$' : '')), '');
+        },
 
-		},
+        rtrim = function(string, charlist) {
 
-		rtrim = function(string, charlist) {
+            return ltrim(string, charlist, 1)
 
-			return ltrim(string, charlist, 1)
+        },
 
-		},
+        camelCase = function(string) {
 
-		camelCase = function(string) {
+            return (string + '').replace(/-\w/g, function(string) {
 
-			return (string + '').replace(/-\w/g, function(string) {
+                return string.substr(1, 1).toUpperCase()
+            })
+        },
 
-				return string.substr(1, 1).toUpperCase()
-			})
-		},
+        inObject = function(search, array, type, index) {
 
-		inObject = function(search, array, type, index) {
+            var result = index ? -1 : !1;
 
-			var result = index ? -1 : !1;
+            each(array, function(i) {
 
-			each(array, function(i) {
+                if (type ? search === this : search == this) return result = index ? i : real
 
-				if (type ? search === this : search == this) return result = index ? i : real
+            })
 
-			})
+            return result
+        },
 
-			return result
-		},
+        search = function(search, object, type) {
 
-		search = function(search, object, type) {
+            return inObject(search, object, type, 1)
 
-			return inObject(search, object, type, 1)
+        },
 
-		},
+        replaceUnitis = function(string) {
 
-		replaceUnitis = function(string) {
+            return (string + '').replace(/(\d+)(px|rem|em|pt)?/ig, function(a, number, uniti) {
 
-			return (string + '').replace(/(\d+)(px|rem|em|pt)?/ig, function(a, number, uniti) {
+                return number + (uniti || 'px')
+            })
+        },
 
-				return number + (uniti || 'px')
-			})
-		},
+        each = function(object, callback) {
 
-		each = function(object, callback) {
+            if (!object || !callback || !callback.call) return this;
 
-			if (!object || !callback || !callback.call) return this;
+            var i = 0,
 
-			var i = 0,
+                length = object.length,
 
-				length = object.length,
+                returns;
 
-				returns;
+            if (length !== undefined) {
 
-			if (length !== undefined) {
+                for (; i < length; i++) {
 
-				for (; i < length; i++) {
+                    if (object[i] == null) continue;
 
-					if (object[i] == null) continue;
+                    returns = callback.call(object[i], i, object);
 
-					returns = callback.call(object[i], i, object);
+                    if (returns !== undefined) return returns
 
-					if (returns !== undefined) return returns
+                }
 
-				}
+            } else {
 
-			} else {
+                for (i in object) {
 
-				for (i in object) {
+                    if (object[i] == null || isWindow(object[i])) continue;
 
-					if (object[i] == null || isWindow(object[i])) continue;
+                    returns = callback.call(object[i], i, object);
 
-					returns = callback.call(object[i], i, object);
+                    if (returns !== undefined) return returns
 
-					if (returns !== undefined) return returns
+                }
+            }
+        },
 
-				}
-			}
-		},
+        argument = function(object, start, end) {
 
-		argument = function(object, start, end) {
+            if (!isObject(object)) return [];
 
-			if (!isObject(object)) return [];
+            var argumentsArray = [],
 
-			var argumentsArray = [],
+                start = int(start),
 
-				start = int(start),
+                end = int(end) || object.length;
 
-				end = int(end) || object.length;
+            for (var i = 0; i < object.length; i++) {
 
-			for (var i = 0; i < object.length; i++) {
+                if (i >= start && i <= end) argumentsArray.push(object[i])
 
-				if (i >= start && i <= end) argumentsArray.push(object[i])
+            }
 
-			}
+            return argumentsArray
+        },
+        merge = function() {
 
-			return argumentsArray
-		},
-		merge = function() {
+            if (arguments.length < 1) return arguments[0]
 
-			if (arguments.length < 1) return arguments[0]
+            var argumentArray = argument(arguments),
 
-			var argumentArray = argument(arguments),
+                target = argumentArray[0],
 
-				target = argumentArray[0],
+                cover = argumentArray[argumentArray.length - 1] === real,
 
-				cover = argumentArray[argumentArray.length - 1] === real,
+                argumentArray = argumentArray.slice(1);
 
-				argumentArray = argumentArray.slice(1);
+            each(argumentArray, function() {
 
-			each(argumentArray, function() {
+                if (isArray(target) && isArray(this)) {
 
-				if (isArray(target) && isArray(this)) {
+                    target = target.concat(this)
 
-					target = target.concat(this)
+                } else {
 
-				} else {
+                    each(this, function(i) {
 
-					each(this, function(i) {
+                        if (target[i] === undefined || cover) target[i] = this
 
-						if (target[i] === undefined || cover) target[i] = this
+                    })
+                }
 
-					})
-				}
+            })
 
-			})
+            return target
+        },
 
-			return target
-		},
+        callback = function() {
 
-		callback = function() {
+            var arg = argument(arguments),
 
-			var arg = argument(arguments),
+                fun = arg.shift(),
 
-				fun = arg.shift(),
+                context = arg.shift() || nick.window;
 
-				context = arg.shift() || nick.window;
+            if (isFunction(fun)) {
 
-			if (isFunction(fun)) {
+                return fun.apply(context, arg)
 
-				return fun.apply(context, arg)
+            } else if (isString(fun)) {
 
-			} else if (isString(fun)) {
+                var str = fun.split('.'),
 
-				var str = fun.split('.'),
+                    fun = context;
 
-					fun = context;
+                each(str, function() {
 
-				each(str, function() {
+                    if (fun) fun = fun[this]
+                });
+                if (isFunction(fun)) {
 
-					if (fun) fun = fun[this]
-				});
-				if (isFunction(fun)) {
+                    return fun.apply(context, arg)
+                }
+            }
 
-					return fun.apply(context, arg)
-				}
-			}
+        },
+        css = function(element, style) {
 
-		},
-		css = function(element, style) {
+            var element = element || '',
 
-			var element = element || '',
+                style = isString(style) ? camelCase(style) : style,
 
-				style = isString(style) ? camelCase(style) : style,
+                styleValue,
 
-				styleValue,
+                notUntis = {
 
-				notUntis = {
+                    zIndex: 0,
+                    opacity:0
 
-					zIndex: 0,
-					opacity:0
+                };
 
-				};
+            if (element.style[style] !== undefined) {
 
-			if (element.style[style] !== undefined) {
+                var currentStyle = element.currentStyle ? element.currentStyle : nick.window.getComputedStyle(element, null);
 
-				var currentStyle = element.currentStyle ? element.currentStyle : nick.window.getComputedStyle(element, null);
+                return currentStyle[style]
 
-				return currentStyle[style]
+            } else {
 
-			} else {
+                each(style, function(i) {
 
-				each(style, function(i) {
+                    i = camelCase(i);
 
-					i = camelCase(i);
+                    if (element.style[i] !== undefined) {
 
-					if (element.style[i] !== undefined) {
+                        styleValue = this;
 
-						styleValue = this;
+                        if (!notUntis[i]) {
 
-						if (!notUntis[i]) {
+                            styleValue = replaceUnitis(this)
 
-							styleValue = replaceUnitis(this)
+                        }
 
-						}
+                        element.style[i] = styleValue
+                    }
+                })
 
-						element.style[i] = styleValue
-					}
-				})
+            }
 
-			}
+        },
+        addQueue = function(callback, i, argumentArray) {
 
-		},
-		addQueue = function(callback, i, argumentArray) {
+            if (!window.test) {
+                window.test = [this]
+            } else {
+                window.test.push(this)
+            }
 
-			if (!window.test) {
-				window.test = [this]
-			} else {
-				window.test.push(this)
-			}
+            if (!this[i]) return this;
 
-			if (!this[i]) return this;
+            var $this = this,
 
-			var $this = this,
+                element = $this[i];
 
-				element = $this[i];
+            element.queue = element.queue || [];
 
-			element.queue = element.queue || [];
+            var queue = element.queue;
 
-			var queue = element.queue;
+            if (!queue.length) {
 
-			if (!queue.length) {
+                callback.apply(element, argumentArray)
 
-				callback.apply(element, argumentArray)
+            }
 
-			}
+            queue.push({
+                fn: callback,
+                arg: argumentArray
+            });
 
-			queue.push({
-				fn: callback,
-				arg: argumentArray
-			});
+        },
 
-		},
+        matchprop = function(attrs, element) {
 
-		matchprop = function(attrs, element) {
+            if (!element) return fake;
 
-			if (!element) return fake;
+            var returns = real;
 
-			var returns = real;
+            each((attrs || '').split('&'), function() {
 
-			each((attrs || '').split('&'), function() {
+                if (this == '') return;
 
-				if (this == '') return;
+                var pattern = this.replace(/([\^\$])=/g, '$1').match(/^(.*?)([\^\$=])(.*)/),
 
-				var pattern = this.replace(/([\^\$])=/g, '$1').match(/^(.*?)([\^\$=])(.*)/),
+                    pattern = pattern || [],
 
-					pattern = pattern || [],
+                    limit = pattern[2] || fake,
 
-					limit = pattern[2] || fake,
+                    key = pattern[1],
 
-					key = pattern[1],
+                    value = pattern[3],
 
-					value = pattern[3],
+                    value = key == 'className' ? '.*\\b' + value + '\\b.*?' : value,
 
-					value = key == 'className' ? '.*\\b' + value + '\\b.*?' : value,
+                    reg = new RegExp((limit == '$' ? '' : '^') + value + (limit == '^' ? '' : '$'), 'ig'),
 
-					reg = new RegExp((limit == '$' ? '' : '^') + value + (limit == '^' ? '' : '$'), 'ig'),
+                    value = element[key] || '';
 
-					value = element[key] || '';
+                if (!reg.test(value)) return returns = fake
 
-				if (!reg.test(value)) return returns = fake
+            });
 
-			});
+            return returns;
 
-			return returns;
+        },
 
-		},
+        ID = /#.+/,
 
-		ID = /#.+/,
+        CLASS = /\..+/,
 
-		CLASS = /\..+/,
+        byId = function(id, context) {
 
-		byId = function(id, context) {
+            var fn = 'getElementById',
 
-			var fn = 'getElementById',
+                id = id || '',
 
-				id = id || '',
+                tag = id.replace(/^(.+)?#.+/, '$1') || '',
 
-				tag = id.replace(/^(.+)?#.+/, '$1') || '',
+                context = context[fn] ? context : nick.document,
 
-				context = context[fn] ? context : nick.document,
+                element = context[fn](id.replace(tag + '#', ''));
 
-				element = context[fn](id.replace(tag + '#', ''));
+            return tag ? (element && element.tagName == tag.toUpperCase() ? [element] : '') : [element];
 
-			return tag ? (element && element.tagName == tag.toUpperCase() ? [element] : '') : [element];
+        },
 
-		},
+        byTag = function(tag, context) {
 
-		byTag = function(tag, context) {
+            var elements = [],
 
-			var elements = [],
+                fun = 'getElementsByTagName';
 
-				fun = 'getElementsByTagName';
+            each(context && context.length ? context : [context], function() {
 
-			each(context && context.length ? context : [context], function() {
+                var $this = this;
 
-				var $this = this;
+                each($this[fun] ? $this[fun](tag) : fake, function() {
 
-				each($this[fun] ? $this[fun](tag) : fake, function() {
+                    elements.push(this)
+                })
 
-					elements.push(this)
-				})
+            });
 
-			});
+            return elements
+        },
 
-			return elements
-		},
+        byClass = function(name, context) {
 
-		byClass = function(name, context) {
+            var fn = 'getElementByClassName',
 
-			var fn = 'getElementByClassName',
+                name = name || '',
 
-				name = name || '',
+                tag = name.replace(/^(.+)?\..+/, '$1') || '',
 
-				tag = name.replace(/^(.+)?\..+/, '$1') || '',
+                name = name.replace(tag + '.', ''),
 
-				name = name.replace(tag + '.', ''),
+                elements = [];
 
-				elements = [];
+            each(context && context.length ? context : [context], function() {
 
-			each(context && context.length ? context : [context], function() {
+                var $this = this;
 
-				var $this = this;
+                each($this[fn] ? $this[fn](name) : byTag('*', [$this]), function() {
 
-				each($this[fn] ? $this[fn](name) : byTag('*', [$this]), function() {
+                    var $this = this,
 
-					var $this = this,
+                        matchTag = tag ? lowerCase.call(tag) == lowerCase.call($this.tagName) : real;
 
-						matchTag = tag ? lowerCase.call(tag) == lowerCase.call($this.tagName) : real;
+                    if ($this[fn] && matchTag) {
 
-					if ($this[fn] && matchTag) {
+                        elements.push($this)
 
-						elements.push($this)
+                    } else {
 
-					} else {
+                        if (matchTag && inObject(name, $this.className.split(/\s+/))) {
 
-						if (matchTag && inObject(name, $this.className.split(/\s+/))) {
+                            elements.push($this)
+                        }
+                    }
 
-							elements.push($this)
-						}
-					}
+                });
 
-				});
+            });
 
-			});
+            return elements
 
-			return elements
+        },
 
-		},
+        parseSelector = function(selector) {
 
-		parseSelector = function(selector) {
+            return (selector || '').replace(/\./g, '&className=').replace(/#/, '&id=').replace(/^(\w+)&?/, 'tagName=$1&')
+        },
 
-			return (selector || '').replace(/\./g, '&className=').replace(/#/, '&id=').replace(/^(\w+)&?/, 'tagName=$1&')
-		},
+        children = function(context, selector, relation, loop) { //定义查找元素的关系  默认为子节点，否则可以是下一兄弟或者后面所有兄弟
 
-		children = function(context, selector, relation, loop) { //定义查找元素的关系  默认为子节点，否则可以是下一兄弟或者后面所有兄弟
+            var elements = [],
+                type = 'nodeType';
 
-			var elements = [],
-				type = 'nodeType';
+            each(context.length ? context : [context], function() {
 
-			each(context.length ? context : [context], function() {
+                var $this = this,
 
-				var $this = this,
+                    nodes = relation == '>' ? $this.childNodes : [],
 
-					nodes = relation == '>' ? $this.childNodes : [],
+                    attr = relation == '+' ? 'nextSibling' : relation == '-' ? 'previousSibling' : relation == '<' ? 'parentNode' : 'nextSibling';
 
-					attr = relation == '+' ? 'nextSibling' : relation == '-' ? 'previousSibling' : relation == '<' ? 'parentNode' : 'nextSibling';
+                if (relation && relation != '>') {
 
-				if (relation && relation != '>') {
+                    while ($this != null && (relation == '~' || loop ? real : $this != this ? $this.nodeType != 1 : real)) {
 
-					while ($this != null && (relation == '~' || loop ? real : $this != this ? $this.nodeType != 1 : real)) {
+                        $this = $this[attr];
 
-						$this = $this[attr];
+                        if ($this && $this[type] == 1 && (!selector ? real : matchprop(parseSelector(selector), $this)) && !inObject($this, elements)) {
 
-						if ($this && $this[type] == 1 && (!selector ? real : matchprop(parseSelector(selector), $this)) && !inObject($this, elements)) {
+                            elements.push($this);
 
-							elements.push($this);
+                            if (loop) break;
+                        }
 
-							if (loop) break;
-						}
+                    }
 
-					}
+                } else {
 
-				} else {
+                    each(nodes, function() {
 
-					each(nodes, function() {
+                        var $this = this;
 
-						var $this = this;
+                        if ($this[type] == 1 && (!selector ? real : matchprop(parseSelector(selector), $this))) elements.push($this)
+                    })
 
-						if ($this[type] == 1 && (!selector ? real : matchprop(parseSelector(selector), $this))) elements.push($this)
-					})
+                }
+            });
 
-				}
-			});
+            return elements;
 
-			return elements;
+        },
 
-		},
+        find = function(selector, context) {
 
-		find = function(selector, context) {
+            var array = [];
 
-			var array = [];
+            if (!isString(selector)) {
 
-			if (!isString(selector)) {
+                if (isElement(selector)) return [selector];
 
-				if (isElement(selector)) return [selector];
+                each(selector, function() {
+                    if (isElement(this)) array.push(this)
+                });
 
-				each(selector, function() {
-					if (isElement(this)) array.push(this)
-				});
+                return array
+            }
 
-				return array
-			}
+            each(selector.split(','), function() {
 
-			each(selector.split(','), function() {
+                var elements;
 
-				var elements;
+                each(this.split(/\s+/), function() {
 
-				each(this.split(/\s+/), function() {
+                    each(this.replace(/([\+>~])/g, ',$1').split(','), function() {
 
-					each(this.replace(/([\+>~])/g, ',$1').split(','), function() {
+                        var relation = this.match(/^([\+>~])/),
 
-						var relation = this.match(/^([\+>~])/),
+                            relation = relation && relation[1] ? relation[1] : '',
 
-							relation = relation && relation[1] ? relation[1] : '',
+                            selector = this.replace(relation, ''),
 
-							selector = this.replace(relation, ''),
+                            search = ID.test(selector) ? byId : CLASS.test(selector) ? byClass : byTag;
 
-							search = ID.test(selector) ? byId : CLASS.test(selector) ? byClass : byTag;
+                        each(selector.replace(/([^\(]):/g, '$1$:').split('$'), function() {
 
-						each(selector.replace(/([^\(]):/g, '$1$:').split('$'), function() {
+                            var pattern = this.match(/^:(\w+)(.*)/),
 
-							var pattern = this.match(/^:(\w+)(.*)/),
+                                fun = pattern && pattern.length > 1 ? pattern[1] : '',
 
-								fun = pattern && pattern.length > 1 ? pattern[1] : '',
+                                filter = fun ? pattern[2].replace(/[\(\):]/g, '') : '',
 
-								filter = fun ? pattern[2].replace(/[\(\):]/g, '') : '',
+                                selector = this;
+                            //匹配出过渡函数则执行过滤，否则按常规方式查找元素。
 
-								selector = this;
-							//匹配出过渡函数则执行过滤，否则按常规方式查找元素。
+                            fun && elements[fun] ? elements[fun](filter || undefined) : relation ? elements = children(elements, selector, relation) : elements = search(selector, elements === undefined ? context : elements);
+                        });
 
-							fun && elements[fun] ? elements[fun](filter || undefined) : relation ? elements = children(elements, selector, relation) : elements = search(selector, elements === undefined ? context : elements);
-						});
+                    })
+                });
 
-					})
-				});
+                array = array.concat(elements);
 
-				array = array.concat(elements);
+            });
 
-			});
+            return array;
 
-			return array;
+        },
 
-		},
+        first = function(start, len) {
 
-		first = function(start, len) {
+            var $this = this;
 
-			var $this = this;
+            $this.splice(start === undefined ? 1 : start, len || this.length);
 
-			$this.splice(start === undefined ? 1 : start, len || this.length);
+            return $this
+        },
 
-			return $this
-		},
+        last = function() {
 
-		last = function() {
+            return this.first(0, this.length - 1)
+        },
 
-			return this.first(0, this.length - 1)
-		},
+        gt = function(index) {
+            return this.first(0, index + 1)
+        },
 
-		gt = function(index) {
-			return this.first(0, index + 1)
-		},
+        lt = function(index) {
+            return this.first(index)
+        },
 
-		lt = function(index) {
-			return this.first(index)
-		},
+        not = function(index) {
+            return this.first(index == 'last' ? this.length - 1 : index == 'first' ? 0 : index, 1)
+        },
 
-		not = function(index) {
-			return this.first(index == 'last' ? this.length - 1 : index == 'first' ? 0 : index, 1)
-		},
+        eq = function(index) {
+            var index = int(index),
 
-		eq = function(index) {
-			var index = int(index),
+                $this = this,
 
-				$this = this,
+                cur = $this.slice(index, index + 1);
 
-				cur = $this.slice(index, index + 1);
+            $this.splice(0, $this.length);
 
-			$this.splice(0, $this.length);
+            if (cur.length) $this.push(cur[0]);
 
-			if (cur.length) $this.push(cur[0]);
+            return $this
+        },
+        
+        hasClass = function(className){
+                
+            return new RegExp('\\b'+className+'\\b').test(this.className)
+        },
+        
+        addClass = function(className){
+            
+            if(!hasClass.call(this,className))this.className+=' '+className
+        },
+        
+        removeClass = function(className){
+            
+            var attr = 'className',
+            
+                $this = this;
+                
+                $this[attr] = $this[attr].replace(new RegExp('\\b'+className+'\\b'),'');
+            
+        }
 
-			return $this
-		},
-		
-		hasClass = function(className){
-				
-			return new RegExp('\\b'+className+'\\b').test(this.className)
-		},
-		
-		addClass = function(className){
-			
-			if(!hasClass.call(this,className))this.className+=' '+className
-		},
-		
-		removeClass = function(className){
-			
-			var attr = 'className',
-			
-				$this = this;
-				
-				$this[attr] = $this[attr].replace(new RegExp('\\b'+className+'\\b'),'');
-			
-		}
+        arrayPrototype = 'first,last,gt,lt,not,eq'.split(','),
 
-		arrayPrototype = 'first,last,gt,lt,not,eq'.split(','),
+        extend = function(object, callback, argumentsArray) {
 
-		extend = function(object, callback, argumentsArray) {
+            var returns = each(object, function(i) {
 
-			var returns = each(object, function(i) {
+                return callback.apply(this, [i].concat(argument(argumentsArray)))
 
-				return callback.apply(this, [i].concat(argument(argumentsArray)))
+            });
+            return returns === undefined || returns === fake ? object : returns
 
-			});
-			return returns === undefined || returns === fake ? object : returns
+        },
 
-		},
+        nick = function() {
 
-		nick = function() {
+            return new nick.fn.init(argument(arguments))
 
-			return new nick.fn.init(argument(arguments))
+        };
 
-		};
+    nick.fn = nick.prototype = {
 
-	nick.fn = nick.prototype = {
+            length: 0,
 
-			length: 0,
+            init: function(argument) {
 
-			init: function(argument) {
+                return nick.fn.core.apply(this, argument)
 
-				return nick.fn.core.apply(this, argument)
+            }
+        },
 
-			}
-		},
+        nick.fn.init.prototype = nick.fn,
 
-		nick.fn.init.prototype = nick.fn,
+        nick.extend = nick.fn.extend = function(object, cover) {
 
-		nick.extend = nick.fn.extend = function(object, cover) {
+            if (!object) return this;
 
-			if (!object) return this;
+            for (var i in object) {
 
-			for (var i in object) {
+                if (!this[i] || cover) this[i] = object[i]
+            }
 
-				if (!this[i] || cover) this[i] = object[i]
-			}
+            return this
+        };
 
-			return this
-		};
+    
+    nick.extend({
 
-	
-	nick.extend({
+            window: window,
+            document: document,
+            type: type,
+            number: number,
+            int: int,
+            float: float,
+            trim: trim,
+            ltrim: ltrim,
+            rtrim: rtrim,
+            camelCase: camelCase,
+            // inObject: inObject,
+            search: search,
+            each: each,
+            argument: argument,
+            merge: merge,
+            callback: callback,
+            css: css,
+            // 绑定 isObject isNumber isBoolean isString isFunction
+            bindIs:function(){
 
-			window: window,
-			document: document,
-			type: type,
-			number: number,
-			int: int,
-			float: float,
-			trim: trim,
-			ltrim: ltrim,
-			rtrim: rtrim,
-			camelCase: camelCase,
-			// inObject: inObject,
-			search: search,
-			each: each,
-			argument: argument,
-			merge: merge,
-			callback: callback,
-			css: css,
-			// 绑定 isObject isNumber isBoolean isString isFunction
-			bindIs:function(){
+                var self = this;
 
-				var self = this;
+                class2type.replace( rword , function( klass ){
 
-				class2type.replace( rword , function( klass ){
+                    self[ 'is' + klass ] = function( t ){
 
-					self[ is + klass ] = function( t ){
+                        return type( t ) === klass.toLowerCase();
 
-						return type( t ) === klass.toLowerCase();
+                    }
 
-					}
+                })
 
-				})
+            }(),
 
-			}(),
+            setWindow: function() {
 
-			setWindow: function() {
+                if (!this.isWindow(window)) return this;
 
-				if (!this.isWindow(window)) return this;
+                this.window = window,
 
-				this.window = window,
+                    this.document = window.document,
 
-					this.document = window.document,
+                    this.root = window.document.documentElement
 
-					this.root = window.document.documentElement
+            }
 
-			}
+        }),
+        
+        each('Boolean Number String Function Array Date RegExp Object Error'.split(' '), function() {
 
-		}),
-		
-		each('Boolean Number String Function Array Date RegExp Object Error'.split(' '), function() {
+            type['[object ' + this + ']'] = lowerCase.call(this)
 
-			type['[object ' + this + ']'] = lowerCase.call(this)
+            var name = this;
 
-			var name = this;
+            nick['is' + name] = function(data) {
 
-			nick['is' + name] = function(data) {
+                return type(data) == lowerCase.call(name)
+            }
+        }),
+        each([first, last, gt, lt, not, eq], function(i) {
+            Array.prototype[arrayPrototype[i]] = this
+        }),
+        each('pop shift unshift slice sort reverse splice join concat push'.split(' '), function(i) {
 
-				return type(data) == lowerCase.call(name)
-			}
-		}),
-		each([first, last, gt, lt, not, eq], function(i) {
-			Array.prototype[arrayPrototype[i]] = this
-		}),
-		each('pop shift unshift slice sort reverse splice join concat push'.split(' '), function(i) {
+            nick.fn[this] = Array.prototype[this];
 
-			nick.fn[this] = Array.prototype[this];
+        }),
 
-		}),
+        each('array,function,object,element,boolean,window,number'.split(','), function() {
+            var $this = this;
+            nick[camelCase('is-' + $this)] = function(object) {
+                return type(object) == $this
+            }
+        }),
 
-		each('array,function,object,element,boolean,window,number'.split(','), function() {
-			var $this = this;
-			nick[camelCase('is-' + $this)] = function(object) {
-				return type(object) == $this
-			}
-		}),
+        each({
+            after: 1,
+            before: 1,
+            append: 1,
+            prepend: 1
+        }, function(i) {
+            nick.fn[i] = function() {
+                return this.insertNode.apply(this, [i].concat(argument(arguments)));
+            }
+        }),
 
-		each({
-			after: 1,
-			before: 1,
-			append: 1,
-			prepend: 1
-		}, function(i) {
-			nick.fn[i] = function() {
-				return this.insertNode.apply(this, [i].concat(argument(arguments)));
-			}
-		}),
+        each({
+            first: first,
+            last: last,
+            eq: eq,
+            gt: gt,
+            lt: lt
+        }, function(i) {
 
-		each({
-			first: first,
-			last: last,
-			eq: eq,
-			gt: gt,
-			lt: lt
-		}, function(i) {
+            nick.fn[i] = function() {
 
-			nick.fn[i] = function() {
+                var elements = merge([], this);
 
-				var elements = merge([], this);
+                elements[i].apply(elements, arguments);
 
-				elements[i].apply(elements, arguments);
+                return nick().resetElement(elements)
+            }
+        }),
 
-				return nick().resetElement(elements)
-			}
-		}),
+        each('touchstart touchmove touchend click dblclick mouseover mouseout mouseenter mouseleave focus blur mousemove mousedown load  resize unload mouseup reset keypress select change error scroll mousewheel'.split(' '), function() {
+            var type = this;
+            nick.fn[type] = function() {
+                return this.on.apply(this, [type].concat(argument(arguments)))
+            }
+        });
 
-		each('touchstart touchmove touchend click dblclick mouseover mouseout mouseenter mouseleave focus blur mousemove mousedown load  resize unload mouseup reset keypress select change error scroll mousewheel'.split(' '), function() {
-			var type = this;
-			nick.fn[type] = function() {
-				return this.on.apply(this, [type].concat(argument(arguments)))
-			}
-		});
+    nick.fn.extend({
 
-	nick.fn.extend({
+        context: nick.document,
 
-		context: nick.document,
+        length: 0,
+        queue: [],
 
-		length: 0,
-		queue: [],
+        core: function(selector, context) {
 
-		core: function(selector, context) {
+            if (isElement(selector)) {
 
-			if (isElement(selector)) {
+                this.push(selector)
 
-				this.push(selector)
+                return this;
+            }
 
-				return this;
-			}
+            return this.find(selector, context || this.context)
+        },
 
-			return this.find(selector, context || this.context)
-		},
+        find: function(selector, context) {
 
-		find: function(selector, context) {
+            var $this = this,
 
-			var $this = this,
+                context = context || ($this.length ? $this : $this.context);
 
-				context = context || ($this.length ? $this : $this.context);
+            return this.resetElement(find(selector, context))
+        },
 
-			return this.resetElement(find(selector, context))
-		},
+        resetElement: function(elements) {
 
-		resetElement: function(elements) {
+            this.splice(0, this.length),
 
-			this.splice(0, this.length),
+                this.push.apply(this, isArray(elements) ? elements : [elements]);
 
-				this.push.apply(this, isArray(elements) ? elements : [elements]);
+            return this
 
-			return this
+        },
 
-		},
+        css: function() {
 
-		css: function() {
+            return extend(this, function(i, object) {
 
-			return extend(this, function(i, object) {
+                return css(this, object)
 
-				return css(this, object)
+            }, arguments)
+        },
 
-			}, arguments)
-		},
+        animate: function() {
 
-		animate: function() {
+            var $self = this;
 
-			var $self = this;
+            return extend(this, function(i) {
 
-			return extend(this, function(i) {
+                addQueue.call($self, function(i, css, options) {
 
-				addQueue.call($self, function(i, css, options) {
+                    var options = merge({
 
-					var options = merge({
+                            time: 0,
 
-							time: 0,
+                            callback: '',
 
-							callback: '',
+                            style: 'linear'
 
-							style: 'linear'
+                        }, options, real),
 
-						}, options, real),
+                        $this = $self[i],
 
-						$this = $self[i],
+                        count = time = int((int(options.time) || 600) / 15),
 
-						count = time = int((int(options.time) || 600) / 15),
+                        count = 0,
 
-						count = 0,
+                        fun = isFunction(options.callback) ? options.callback : '',
 
-						fun = isFunction(options.callback) ? options.callback : '',
+                        sid,
 
-						sid,
+                        currentStyles = {},
 
-						currentStyles = {},
+                        subStyles = {},
 
-						subStyles = {},
+                        style = options.style,
 
-						style = options.style,
+                        easeStyle = {};
 
-						easeStyle = {};
+                    each(css, function(i) {
 
-					each(css, function(i) {
+                        if ($this.style[i] !== undefined) {
 
-						if ($this.style[i] !== undefined) {
+                            currentStyles[i] = float(nick.css($this, i)),
 
-							currentStyles[i] = float(nick.css($this, i)),
+                                subStyles[i] = float(css[i]) - currentStyles[i],
 
-								subStyles[i] = float(css[i]) - currentStyles[i],
+                                easeStyle[i] = 0;
 
-								easeStyle[i] = 0;
+                        }
 
-						}
+                    });
 
-					});
+                    sid = setInterval(function() {
 
-					sid = setInterval(function() {
+                        count++;
 
-						count++;
+                        each(currentStyles, function(i) {
 
-						each(currentStyles, function(i) {
+                            easeStyle[i] = Math.ceil(callback(style, tween, count, currentStyles[i], subStyles[i], time));
 
-							easeStyle[i] = Math.ceil(callback(style, tween, count, currentStyles[i], subStyles[i], time));
+                            nick.css($this, easeStyle)
 
-							nick.css($this, easeStyle)
+                        });
+                        if (count > time) {
 
-						});
-						if (count > time) {
+                            clearInterval(sid);
 
-							clearInterval(sid);
+                            nick.css($this, css)
 
-							nick.css($this, css)
+                            var queue = $this.queue || [],
 
-							var queue = $this.queue || [],
+                                arg = argument(queue ? queue[0].arg : [], 3);
 
-								arg = argument(queue ? queue[0].arg : [], 3);
+                            queue.shift();
 
-							queue.shift();
+                            if (queue.length) queue[0].fn.apply($this, queue[0].arg)
 
-							if (queue.length) queue[0].fn.apply($this, queue[0].arg)
+                            if (isFunction(options.callback)) options.callback.apply($this, [i].concat(arg));
+                        }
 
-							if (isFunction(options.callback)) options.callback.apply($this, [i].concat(arg));
-						}
+                    }, 15);
 
-					}, 15);
+                }, i, arguments)
 
-				}, i, arguments)
+            }, arguments)
 
-			}, arguments)
+        },
 
-		},
+        children: function(selector,relation,loop) {
+            return this.resetElement(children(this, selector,relation|| '>',loop))
+        },
 
-		children: function(selector,relation,loop) {
-			return this.resetElement(children(this, selector,relation|| '>',loop))
-		},
+        next: function(selector, loop) {
+            return this.children(selector,'+',loop)
+        },
+        prev: function(selector, loop) {
+            return this.children(selector,'-',loop)
+        },
+        parent: function(selector, loop) {
+            return this.children(selector,'<',loop)
+        },
+        insertNode: function() {
 
-		next: function(selector, loop) {
-			return this.children(selector,'+',loop)
-		},
-		prev: function(selector, loop) {
-			return this.children(selector,'-',loop)
-		},
-		parent: function(selector, loop) {
-			return this.children(selector,'<',loop)
-		},
-		insertNode: function() {
+            var relation = {
+                after: 1,
+                before: 1
+            };
 
-			var relation = {
-				after: 1,
-				before: 1
-			};
+            return extend(this, function(i, type, element) {
+                //after与before 父级为父级否则为自己
+                var $this = this,
 
-			return extend(this, function(i, type, element) {
-				//after与before 父级为父级否则为自己
-				var $this = this,
+                    parent = relation[type] ? $this.parentNode : $this,
 
-					parent = relation[type] ? $this.parentNode : $this,
+                    html = isString(element),
 
-					html = isString(element),
+                    sibling = {
+                        after: 'nextSibling',
+                        prepend: 'firstChild',
+                        append: 'null',
+                        before: 'previousSibling'
+                    },
+                    //插入的位置根据节点关系来选择，位置不同则关系属性不同
+                    sibling = sibling[type] ? $this[sibling[type]] : parent,
 
-					sibling = {
-						after: 'nextSibling',
-						prepend: 'firstChild',
-						append: 'null',
-						before: 'previousSibling'
-					},
-					//插入的位置根据节点关系来选择，位置不同则关系属性不同
-					sibling = sibling[type] ? $this[sibling[type]] : parent,
+                    doc = nick.document;
 
-					doc = nick.document;
+                each(element && element.length && !html ? element : [element], function() {
 
-				each(element && element.length && !html ? element : [element], function() {
+                    var node = this,
+                        //可能插入的元素是数组所以进行遍历。如果不是元素且是字符串则创建节点
 
-					var node = this,
-						//可能插入的元素是数组所以进行遍历。如果不是元素且是字符串则创建节点
+                        node = isElement(node) ? node : html ? doc.createElement('div') : '';
 
-						node = isElement(node) ? node : html ? doc.createElement('div') : '';
+                    if (html) {
+                        //将创建节点的内容设置为字符串并先隐藏
+                        node.innerHTML = this,
+                            node.style.display = 'none';
+                    }
+                    //插入节点
+                    parent.insertBefore(node, sibling || null);
 
-					if (html) {
-						//将创建节点的内容设置为字符串并先隐藏
-						node.innerHTML = this,
-							node.style.display = 'none';
-					}
-					//插入节点
-					parent.insertBefore(node, sibling || null);
+                    if (html) {
+                        //如果是字符串遍历节点
+                        each(node.childNodes, function() {
+                                //将每个节点克隆并插入父级
+                                parent.insertBefore(this.cloneNode(true), node)
+                                    //克隆完毕将节点删除
+                            }),
+                            node.parentNode.removeChild(node);
+                    }
+                });
 
-					if (html) {
-						//如果是字符串遍历节点
-						each(node.childNodes, function() {
-								//将每个节点克隆并插入父级
-								parent.insertBefore(this.cloneNode(true), node)
-									//克隆完毕将节点删除
-							}),
-							node.parentNode.removeChild(node);
-					}
-				});
+            }, arguments)
+        },
+        attr: function() {
 
-			}, arguments)
-		},
-		attr: function() {
+            return extend(this, function(i, json) {
 
-			return extend(this, function(i, json) {
+                var $this = this;
 
-				var $this = this;
+                if (isString(json)) return $this.getAttribute(json) || $this[json];
 
-				if (isString(json)) return $this.getAttribute(json) || $this[json];
+                each(json, function(i) {
 
-				each(json, function(i) {
+                    i == 'innerHTML' || isString(this) ? $this[i] = this + '' : $this.setAttribute(i, this + '')
 
-					i == 'innerHTML' || isString(this) ? $this[i] = this + '' : $this.setAttribute(i, this + '')
+                })
+            }, arguments)
+        },
+        html: function(html) {
 
-				})
-			}, arguments)
-		},
-		html: function(html) {
+            if (html === undefined) return this.attr('innerHTML');
 
-			if (html === undefined) return this.attr('innerHTML');
+            return extend(this, function(i, html) {
 
-			return extend(this, function(i, html) {
+                var $this = this;
 
-				var $this = this;
+                try {
 
-				try {
+                    $this.innerHTML = html;
 
-					$this.innerHTML = html;
+                } catch (e) {
 
-				} catch (e) {
+                    var node = nick.document.createElement('div'),
 
-					var node = nick.document.createElement('div'),
+                        oldNode = $this.childNodes,
 
-						oldNode = $this.childNodes,
+                        i = oldNode.length - 1;
 
-						i = oldNode.length - 1;
+                    node.innerHTML = html;
 
-					node.innerHTML = html;
+                    while (i > -1) {
+                        oldNode[i].parentNode.removeChild(oldNode[i]);
+                        i--;
+                    }
 
-					while (i > -1) {
-						oldNode[i].parentNode.removeChild(oldNode[i]);
-						i--;
-					}
+                    $this.appendChild(node),
 
-					$this.appendChild(node),
+                        each(node.childNodes, function() {
+                            $this.appendChild(this.cloneNode(true))
+                        }),
 
-						each(node.childNodes, function() {
-							$this.appendChild(this.cloneNode(true))
-						}),
+                        $this.removeChild(node)
 
-						$this.removeChild(node)
+                }
 
-				}
+            }, arguments)
+        },
 
-			}, arguments)
-		},
+        val: function(value) {
+            return extend(this, function(i, value) {
+                if (value === undefined) return this.value;
+                this.value = value;
+            }, arguments)
+        },
 
-		val: function(value) {
-			return extend(this, function(i, value) {
-				if (value === undefined) return this.value;
-				this.value = value;
-			}, arguments)
-		},
+        on: function() {
 
-		on: function() {
+            var window = nick.window;
 
-			var window = nick.window;
+            return extend(this, function(i, type, fun, boolean) {
 
-			return extend(this, function(i, type, fun, boolean) {
+                var type = ltrim('' + type, 'on'),
 
-				var type = ltrim('' + type, 'on'),
+                    $this = this,
 
-					$this = this,
+                    arg = argument(arguments, 3),
 
-					arg = argument(arguments, 3),
+                    pre = '_events',
 
-					pre = '_events',
+                    listenter = 'addEventListener';
 
-					listenter = 'addEventListener';
+                if (!$this[pre]) $this[pre] = {};
 
-				if (!$this[pre]) $this[pre] = {};
+                var events = $this[pre],
 
-				var events = $this[pre],
+                    eventsFunction = function(e) {
 
-					eventsFunction = function(e) {
+                        e = e || window.event;
 
-						e = e || window.event;
+                        e.target = e.target || e.srcElement;
 
-						e.target = e.target || e.srcElement;
+                        each(events[type], function() {
 
-						each(events[type], function() {
+                            if (this.apply($this, [e, i].concat(arg)) === fake) {
 
-							if (this.apply($this, [e, i].concat(arg)) === fake) {
+                                !e.preventDefault || e.preventDefault();
 
-								!e.preventDefault || e.preventDefault();
+                                e.returnValue = fake
+                            }
 
-								e.returnValue = fake
-							}
+                        })
+                    };
 
-						})
-					};
+                if (!events[type]) {
 
-				if (!events[type]) {
+                    events[type] = [fun];
 
-					events[type] = [fun];
+                    $this[listenter] ? $this[listenter](type, eventsFunction, boolean) : $this.attachEvent('on' + type, eventsFunction, boolean)
 
-					$this[listenter] ? $this[listenter](type, eventsFunction, boolean) : $this.attachEvent('on' + type, eventsFunction, boolean)
+                } else {
 
-				} else {
+                    if (!inObject(fun, events[type])) events[type].push(fun)
+                }
 
-					if (!inObject(fun, events[type])) events[type].push(fun)
-				}
+            }, arguments)
+        },
 
-			}, arguments)
-		},
+        delEvent: function() {
+            return extend(this, function(i, type, fun) {
+                var $this = this,
+                    events = $this['_events'] || {},
+                    events = events[type],
+                    index = search(fun, events);
+                if (events[index]) events.splice(index, 1)
 
-		delEvent: function() {
-			return extend(this, function(i, type, fun) {
-				var $this = this,
-					events = $this['_events'] || {},
-					events = events[type],
-					index = search(fun, events);
-				if (events[index]) events.splice(index, 1)
+            }, arguments)
 
-			}, arguments)
+        },
 
-		},
+        remove: function() {
+            return extend(this, function() {
+                this.parentNode.removeChild(this)
+            }, arguments)
+        },
+        
+        hasClass:function(){
+            return hasClass.apply(this[0],arguments)
+        },
+        
+        addClass:function(){
+            
+            return extend(this,function(i,className){
+                
+                if(!hasClass.call(this,className))this.className+=' '+className
+                
+            },arguments)
+            
+        },
+        
+        removeClass:function(){
+            
+            return extend(this,function(i,className){
+                removeClass.call(this,className)
+            },arguments)
+            
+        },
+        
+        classToggle:function(){
+            return extend(this,function(i,className){
+                
+                (hasClass.call(this,className) ? removeClass:addClass).call(this,className);
+                
+            },arguments)
+            
+        }
 
-		remove: function() {
-			return extend(this, function() {
-				this.parentNode.removeChild(this)
-			}, arguments)
-		},
-		
-		hasClass:function(){
-			return hasClass.apply(this[0],arguments)
-		},
-		
-		addClass:function(){
-			
-			return extend(this,function(i,className){
-				
-				if(!hasClass.call(this,className))this.className+=' '+className
-				
-			},arguments)
-			
-		},
-		
-		removeClass:function(){
-			
-			return extend(this,function(i,className){
-				removeClass.call(this,className)
-			},arguments)
-			
-		},
-		
-		classToggle:function(){
-			return extend(this,function(i,className){
-				
-				(hasClass.call(this,className) ? removeClass:addClass).call(this,className);
-				
-			},arguments)
-			
-		}
+    });
 
-	});
+    window.$ = window.nick = nick;
 
-	window.$ = window.nick = nick;
-
-})(window)
+})(window);
