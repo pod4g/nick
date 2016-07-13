@@ -1,6 +1,6 @@
 (function(window) {
 
-	var window = window,
+		var window = window,
 
 		document = window.document,
 
@@ -11,10 +11,14 @@
 		string = '',
 
 		toString = {}.toString,
-
+		
 		undefined,
 
-		type = [],
+		// type = [],
+		
+		class2type = 'Object Number Boolean String Function',
+
+		rword = /[^, ]+/g;
 
 		space = '[\\s\\r\\n]+',
 
@@ -55,10 +59,20 @@
 			}
 		},
 
-		type = function(data) {
+		// 更精确地判断type。以对象的[[class]]属性作为判断的依据。
+		type = function(data){
 
-			return null === data ? data + '' : 'object' == typeof data || 'function' == typeof data ? type[toString.call(data)] || 'object' : typeof data
+			var t = typeof data,s;
+			
+			if( data == null ) return data + '';
+
+			return t === 'object' ? toString.call( obj ).slice( 8, -1 ).toLowerCase() : t;
+
 		},
+
+		// type = function(data) {
+		// 	return null === data ? data + '' : 'object' == typeof data || 'function' == typeof data ? type[toString.call(data)] || 'object' : typeof data
+		// },
 
 		isWindow = function(window) {
 
@@ -89,7 +103,7 @@
 
 		isArray = function(array) {
 
-			return type(array) == 'array'
+			return Array.isArray ? Array.isArray : type( array ) == 'array'
 		},
 
 		isNick = function(object) {
@@ -708,13 +722,30 @@
 			ltrim: ltrim,
 			rtrim: rtrim,
 			camelCase: camelCase,
-			inObject: inObject,
+			// inObject: inObject,
 			search: search,
 			each: each,
 			argument: argument,
 			merge: merge,
 			callback: callback,
 			css: css,
+			// 绑定 isObject isNumber isBoolean isString isFunction
+			bindIs:function(){
+
+				var self = this;
+
+				class2type.replace( rword , function( klass ){
+
+					self[ is + klass ] = function( t ){
+
+						return type( t ) === klass.toLowerCase();
+
+					}
+
+				})
+
+			}(),
+
 			setWindow: function() {
 
 				if (!this.isWindow(window)) return this;
